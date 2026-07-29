@@ -1,11 +1,6 @@
 import { useState } from "react";
 import { Lock, Mail, User, ShieldCheck } from "lucide-react";
 
-// Public backend URL — update this if your tunnel URL changes
-const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-  ? ""  // Local: use relative URLs (proxied to localhost:5000)
-  : "https://smartdoc-api.loca.lt";  // Vercel: use public tunnel URL
-
 export default function AuthPage({ onLogin }: { onLogin: (user: any) => void }) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
@@ -62,7 +57,7 @@ export default function AuthPage({ onLogin }: { onLogin: (user: any) => void }) 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
 
-      const res = await fetch(`${API_BASE}${endpoint}`, {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

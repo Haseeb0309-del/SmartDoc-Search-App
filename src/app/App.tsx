@@ -1306,10 +1306,8 @@ function Detail({ doc, onBack, onBackToHome, onEdit, onDelete, userEmail, userId
 }
 
 // ─── App ──────────────────────────────────────────────────────────────────────
-// Points to public backend when on Vercel, localhost when developing
-const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-  ? ""
-  : "https://smartdoc-api.loca.lt";
+// Use empty string (relative URL) always — works locally and on Vercel with local fallback
+const API_BASE = "";
 
 export default function App() {
   const [view, setView] = useState<View>("dashboard");
