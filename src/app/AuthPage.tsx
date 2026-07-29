@@ -14,15 +14,56 @@ export default function AuthPage({ onLogin }: { onLogin: (user: any) => void }) 
     setError("");
     setLoading(true);
 
+    // Helper: localStorage-based fallback auth (works on Vercel without backend)
+    const localStorageAuth = () => {
+      const usersRaw = localStorage.getItem("smartdoc_users");
+      const users: any[] = usersRaw ? JSON.parse(usersRaw) : [];
+
+      if (!isLogin) {
+        // Register
+        if (users.find((u: any) => u.email === email)) {
+          setError("An account with this email already exists.");
+          setLoading(false);
+          return;
+        }
+        const newUser = { id: Date.now(), name, email, password };
+        users.push(newUser);
+        localStorage.setItem("smartdoc_users", JSON.stringify(users));
+        setIsLogin(true);
+        setError("Registration successful! Please log in.");
+        setLoading(false);
+      } else {
+        // Login
+        const found = users.find((u: any) => u.email === email && u.password === password);
+        // Also allow demo admin account
+        if (email === "admin@nexussolutions.in" && password === "admin123") {
+          onLogin({ id: 1, name: "Admin", email });
+          setLoading(false);
+          return;
+        }
+        if (found) {
+          onLogin({ id: found.id, name: found.name, email: found.email });
+        } else {
+          setError("Invalid email or password.");
+        }
+        setLoading(false);
+      }
+    };
+
     try {
       const endpoint = isLogin ? "/login" : "/register";
       const payload = isLogin ? { email, password } : { name, email, password };
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
+
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
 
       const data = await res.json();
 
@@ -37,7 +78,8 @@ export default function AuthPage({ onLogin }: { onLogin: (user: any) => void }) 
         setError(data.error || "An error occurred");
       }
     } catch (err) {
-      setError("Network error. Make sure the server is running.");
+      // Server unavailable — use localStorage fallback (works on Vercel)
+      localStorageAuth();
     } finally {
       setLoading(false);
     }
