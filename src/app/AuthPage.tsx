@@ -14,13 +14,26 @@ export default function AuthPage({ onLogin }: { onLogin: (user: any) => void }) 
     setError("");
     setLoading(true);
 
-    // Helper: localStorage-based fallback auth (works seamlessly on any laptop/device)
-    const localStorageAuth = () => {
+    // Helper: Cloud DB & localStorage sync (makes user registrations visible across ALL mobile phones & devices)
+    const localStorageAuth = async () => {
       const usersRaw = localStorage.getItem("smartdoc_users");
       const users: any[] = usersRaw ? JSON.parse(usersRaw) : [];
 
       const userNameStr = name.trim() || email.split("@")[0] || "User";
       const displayName = userNameStr.charAt(0).toUpperCase() + userNameStr.slice(1);
+
+      // Sync user registration to Cloud Database so Admin Portal sees users from ALL phones & laptops
+      try {
+        fetch("https://crudcrud.com/api/b3282f1b4c5646249c0351fd80671aa3/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: displayName,
+            email: email,
+            created_at: new Date().toISOString().replace('T', ' ').slice(0, 19)
+          })
+        }).catch(() => {});
+      } catch (e) {}
 
       if (!isLogin) {
         // Register: Save user & auto-login immediately

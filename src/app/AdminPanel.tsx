@@ -93,13 +93,35 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
         throw new Error(data.error);
       }
     } catch {
-      // Local fallback users for Vercel / offline demo mode
+      // Local & Cloud fallback users for Vercel / cross-device sync
       const localUsersRaw = localStorage.getItem("smartdoc_users");
       const localUsers: any[] = localUsersRaw ? JSON.parse(localUsersRaw) : [];
       const defaultUsers: User[] = [
         { id: 1, name: "Mohammed Haseebuddin", email: "mohdhaseebuddin0309@gmail.com", created_at: "2024-03-15 10:00:00" },
         { id: 2, name: "Nexus Admin", email: "admin@nexussolutions.in", created_at: "2024-01-10 09:30:00" }
       ];
+
+      // Fetch shared user registrations from Cloud DB
+      try {
+        const cloudRes = await fetch("https://crudcrud.com/api/b3282f1b4c5646249c0351fd80671aa3/users");
+        if (cloudRes.ok) {
+          const cloudUsers: any[] = await cloudRes.json();
+          if (Array.isArray(cloudUsers) && cloudUsers.length > 0) {
+            const seenEmails = new Set(defaultUsers.map(u => u.email));
+            const formattedCloudUsers: User[] = cloudUsers
+              .filter((u: any) => u.email && !seenEmails.has(u.email))
+              .map((u: any, idx: number) => ({
+                id: idx + 100,
+                name: u.name || "User",
+                email: u.email,
+                created_at: u.created_at || "Just now"
+              }));
+            setUsers([...defaultUsers, ...formattedCloudUsers]);
+            return;
+          }
+        }
+      } catch (e) {}
+
       const mergedUsers = [
         ...defaultUsers,
         ...localUsers
