@@ -38,7 +38,7 @@ AZURE_OPENAI_KEY        = os.getenv("AZURE_OPENAI_KEY", "").strip()
 AZURE_OPENAI_DEPLOYMENT = os.getenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4o").strip()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins="*", supports_credentials=True)
 
 # ── Database Initialization ────────────────────────────────────────────────────
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "users.db")

@@ -1306,6 +1306,11 @@ function Detail({ doc, onBack, onBackToHome, onEdit, onDelete, userEmail, userId
 }
 
 // ─── App ──────────────────────────────────────────────────────────────────────
+// Points to public backend when on Vercel, localhost when developing
+const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+  ? ""
+  : "https://smartdoc-api.loca.lt";
+
 export default function App() {
   const [view, setView] = useState<View>("dashboard");
   const [query, setQuery] = useState("");
@@ -1416,7 +1421,7 @@ export default function App() {
         localStorage.setItem("search_history", JSON.stringify([v, ...hist].slice(0, 10)));
       }
       if (user?.id) {
-        fetch("/search-history", {
+        fetch(`${API_BASE}/search-history`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ user_id: user.id, query: v })
@@ -1428,7 +1433,7 @@ export default function App() {
     const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 850));
 
     // (1) ML category prediction
-    const predictPromise = fetch("/predict", {
+    const predictPromise = fetch(`${API_BASE}/predict`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: v })
@@ -1442,7 +1447,7 @@ export default function App() {
       .catch(() => { /* ML server offline - silently skip */ });
 
     // (2) Semantic search
-    const azurePromise = fetch("/search", {
+    const azurePromise = fetch(`${API_BASE}/search`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: v, filters: currentFilters, top: 10, page: pageNum, sort: sortVal })
