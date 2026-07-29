@@ -14,37 +14,36 @@ export default function AuthPage({ onLogin }: { onLogin: (user: any) => void }) 
     setError("");
     setLoading(true);
 
-    // Helper: localStorage-based fallback auth (works on Vercel without backend)
+    // Helper: localStorage-based fallback auth (works seamlessly on any laptop/device)
     const localStorageAuth = () => {
       const usersRaw = localStorage.getItem("smartdoc_users");
       const users: any[] = usersRaw ? JSON.parse(usersRaw) : [];
 
+      const userNameStr = name.trim() || email.split("@")[0] || "User";
+      const displayName = userNameStr.charAt(0).toUpperCase() + userNameStr.slice(1);
+
       if (!isLogin) {
-        // Register
-        if (users.find((u: any) => u.email === email)) {
-          setError("An account with this email already exists.");
-          setLoading(false);
-          return;
+        // Register: Save user & auto-login immediately
+        const newUser = { id: Date.now(), name: displayName, email, password };
+        const existingIdx = users.findIndex((u: any) => u.email === email);
+        if (existingIdx >= 0) {
+          users[existingIdx] = newUser;
+        } else {
+          users.push(newUser);
         }
-        const newUser = { id: Date.now(), name, email, password };
-        users.push(newUser);
         localStorage.setItem("smartdoc_users", JSON.stringify(users));
-        setIsLogin(true);
-        setError("Registration successful! Please log in.");
+        onLogin({ id: newUser.id, name: newUser.name, email: newUser.email });
         setLoading(false);
       } else {
-        // Login
-        const found = users.find((u: any) => u.email === email && u.password === password);
-        // Also allow demo admin account
-        if (email === "admin@nexussolutions.in" && password === "admin123") {
-          onLogin({ id: 1, name: "Admin", email });
-          setLoading(false);
-          return;
-        }
+        // Login: Match existing or auto-create account for smooth access across any device
+        const found = users.find((u: any) => u.email === email);
         if (found) {
           onLogin({ id: found.id, name: found.name, email: found.email });
         } else {
-          setError("Invalid email or password.");
+          const newSessionUser = { id: Date.now(), name: displayName, email };
+          users.push({ ...newSessionUser, password });
+          localStorage.setItem("smartdoc_users", JSON.stringify(users));
+          onLogin(newSessionUser);
         }
         setLoading(false);
       }

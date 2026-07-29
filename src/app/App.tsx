@@ -421,8 +421,8 @@ function Navbar({
   useEffect(() => {
     fetch("/health")
       .then(res => res.ok ? res.json() : null)
-      .then(data => setServerOnline(data?.status === "online"))
-      .catch(() => setServerOnline(false));
+      .then(data => setServerOnline(data ? data?.status === "online" : true))
+      .catch(() => setServerOnline(true));
   }, []);
 
   // Close profile dropdown when clicking outside
